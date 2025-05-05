@@ -1,0 +1,50 @@
+@startmindmap
+* Attack Tree: Sniffing Inside Mainframe
+** QDIO Trace
+*** Enable APF-authorized QDIO trace on OSA-Express adapter
+*** z/OS operator & RACF admin privileges
+** RACF TCP/IP TRACE
+*** Modify TCP/IP profile
+*** RACF administrator privileges
+** NetView Packet Capture
+*** Configure and enable NetView distributed packet capture
+*** z/OS operator & RACF admin privileges
+@endmindmap
+
+@startmindmap
+* Attack Tree: Sniffing Outside Mainframe
+** Rogue FTP Proxy
+*** Script injection (FTP_PROXY override)
+*** DNS / hosts file poisoning
+** Network MitM
+*** ARP spoofing (root on Linux/Windows host)
+*** Switch port mirroring (network-admin access)
+** Hypervisor / VM host sniffing
+*** Promiscuous-mode vNIC on host
+*** vSwitch port mirroring (hypervisor-admin)
+@endmindmap
+
+@startuml
+' Deployment diagram: FTP sniffing vectors
+skinparam componentStyle rectangle
+
+node "Mainframe (z/OS)" as Mainframe {
+    component "FTP Script\n(/usr/local/bin/ftp.sh)" as FTPScript
+    database "z/OS RACF Logs & Trace" as RacfLog
+}
+
+node "Attacker Infrastructure" as Attacker {
+    component "Rogue FTP Proxy\n(dev.ftp.local)" as RogueProxy
+    artifact "Compromised Script\n(FTP_PROXY override)" as MalScript
+
+    node "Network" as Net {
+        artifact "Switch Mirror Port" as SwitchMirror
+        artifact "Attacker VM\n(promiscuous mode)" as VMHost
+    }
+}
+
+Mainframe --> RogueProxy : "FTP session\nTCP/IP port 21"
+FTPScript ..> RogueProxy : "Override via FTP_PROXY / DNS hijack"
+SwitchMirror --> Mainframe
+SwitchMirror --> VMHost
+@enduml
